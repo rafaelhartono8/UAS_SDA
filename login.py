@@ -59,42 +59,121 @@ def autentikasi(username, password):
             return True, user["nama"]
     return False, None
 
-# PERTANYAAN KUIS
-questions = [
-    {"pertanyaan": "Apa jenis makanan yang kamu konsumsi?", "jawaban": ["Halal", "Non-Halal"]},
-    {"pertanyaan": "Apakah kamu seorang vegetarian?", "jawaban": ["Iya", "Tidak"]},
-    {"pertanyaan": "Apa kamu memiliki alergi makanan tertentu?", "jawaban": ["Iya", "Tidak"]},
-    {"pertanyaan": "Apa kamu sedang diet?", "jawaban": ["Iya", "Tidak"]}
-]
-
-# TAMPILKAN KUIS
-def tampilkan_kuis(index=0, jawaban_user=[]):
+# TAMPILAN BERANDA
+def tampilkan_beranda(nama):
     for widget in main_frame.winfo_children():
         widget.destroy()
-    if index >= len(questions):
-        with open("kuis.json", "w") as f:
-            json.dump(jawaban_user, f, indent=4)
-        selesai = ctk.CTkLabel(main_frame, text="Terima kasih telah mengisi kuis!", font=("Kanit", 20))
-        selesai.place(relx=0.5, rely=0.5, anchor="center")
-        return
 
-    q = questions[index]
-    label_q = ctk.CTkLabel(main_frame, text=q["pertanyaan"], font=("Kanit", 20), text_color="#1f1f1f")
-    label_q.place(relx=0.5, rely=0.3, anchor="center")
+    greeting = ctk.CTkLabel(main_frame, text=f"Hai, {nama}!", font=("Kanit", 18, "bold"), text_color="white")
+    greeting.place(relx=0.1, rely=0.05, anchor="w")
 
-    def jawab(val):
-        jawaban_user.append({"pertanyaan": q["pertanyaan"], "jawaban": val})
-        tampilkan_kuis(index + 1, jawaban_user)
+    image_path = "makanan.png"
+    if os.path.exists(image_path):
+        img = Image.open(image_path).resize((300, 150))
+        photo = ImageTk.PhotoImage(img)
+        img_label = ctk.CTkLabel(main_frame, text="", image=photo, fg_color="transparent")
+        img_label.image = photo
+        img_label.place(relx=0.5, rely=0.2, anchor="center")
 
-    btn1 = ctk.CTkButton(main_frame, text=q["jawaban"][0], command=lambda: jawab(q["jawaban"][0]),
-                         width=200, height=40, fg_color="#FF7070", hover_color="#FF5050")
-    btn1.place(relx=0.5, rely=0.45, anchor="center")
+    prompt = ctk.CTkLabel(main_frame, text="Mau makan apa hari ini?", font=("Kanit", 20), text_color="white")
+    prompt.place(relx=0.5, rely=0.4, anchor="center")
 
-    btn2 = ctk.CTkButton(main_frame, text=q["jawaban"][1], command=lambda: jawab(q["jawaban"][1]),
-                         width=200, height=40, fg_color="#FF7070", hover_color="#FF5050")
-    btn2.place(relx=0.5, rely=0.55, anchor="center")
+    def buka_form_preferensi():
+        for widget in main_frame.winfo_children():
+            widget.destroy()
 
-# HALAMAN LOGIN
+        ctk.CTkLabel(main_frame, text="Kategori:").place(x=100, y=100)
+        kategori_cb = ctk.CTkComboBox(main_frame, values=["Vegan", "Vegetarian", "Semua"])
+        kategori_cb.place(x=200, y=100)
+
+        ctk.CTkLabel(main_frame, text="Suhu:").place(x=100, y=150)
+        suhu_cb = ctk.CTkComboBox(main_frame, values=["Panas", "Dingin"])
+        suhu_cb.place(x=200, y=150)
+
+        ctk.CTkLabel(main_frame, text="Tekstur:").place(x=100, y=200)
+        tekstur_cb = ctk.CTkComboBox(main_frame, values=["Kering", "Berkuah"])
+        tekstur_cb.place(x=200, y=200)
+
+        ctk.CTkLabel(main_frame, text="Rasa:").place(x=100, y=250)
+        rasa_cb = ctk.CTkComboBox(main_frame, values=["Manis", "Asin", "Pedas"])
+        rasa_cb.place(x=200, y=250)
+
+        def cari():
+            hasil = f"Kategori: {kategori_cb.get()}, Suhu: {suhu_cb.get()}, Tekstur: {tekstur_cb.get()}, Rasa: {rasa_cb.get()}"
+            hasil_label = ctk.CTkLabel(main_frame, text=f"Rekomendasi: {hasil}", font=("Kanit", 14))
+            hasil_label.place(x=100, y=320)
+
+        cari_btn = ctk.CTkButton(main_frame, text="Cari Makanan", command=cari)
+        cari_btn.place(x=100, y=300)
+
+    mood_btn = ctk.CTkButton(main_frame, text="SESUAIKAN MOOD KAMU", fg_color="#C16C6C", hover_color="#B04C4C", command=buka_form_preferensi)
+    mood_btn.place(relx=0.5, rely=0.5, anchor="center")
+
+# TAMPILKAN KUIS
+
+def mulai_kuis(username):
+    for widget in main_frame.winfo_children():
+        widget.destroy()
+
+    pertanyaan_list = [
+        {
+            "pertanyaan": "Apa jenis makanan yang kamu konsumsi?",
+            "opsi": ["Halal", "Non-Halal"]
+        },
+        {
+            "pertanyaan": "Apakah kamu memiliki alergi?",
+            "opsi": ["Iya", "Tidak"]
+        },
+        {
+            "pertanyaan": "Apakah kamu seorang vegetarian?",
+            "opsi": ["Iya", "Tidak"]
+        }
+    ]
+
+    jawaban_user = {
+        "username": username,
+        "jawaban": []
+    }
+
+    def tampilkan_pertanyaan(index):
+        for widget in main_frame.winfo_children():
+            widget.destroy()
+
+        if index < len(pertanyaan_list):
+            q_data = pertanyaan_list[index]
+            pertanyaan = q_data["pertanyaan"]
+            opsi = q_data["opsi"]
+
+            label_q = ctk.CTkLabel(main_frame, text=pertanyaan, font=("Kanit", 20), text_color="#1f1f1f")
+            label_q.place(relx=0.5, rely=0.3, anchor="center")
+
+            for i, o in enumerate(opsi):
+                btn = ctk.CTkButton(main_frame, text=o, width=200, height=40, fg_color="#FF7070",
+                                    hover_color="#FF5050",
+                                    command=lambda val=o: proses_jawaban(index, pertanyaan, val))
+                btn.place(relx=0.5, rely=0.45 + i * 0.1, anchor="center")
+        else:
+            try:
+                with open("kuis.json", "r") as f:
+                    data = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                data = []
+
+            data.append(jawaban_user)
+            with open("kuis.json", "w") as f:
+                json.dump(data, f, indent=4)
+
+            tampilkan_beranda(jawaban_user["username"])
+
+    def proses_jawaban(index, pertanyaan, jawaban):
+        jawaban_user["jawaban"].append({
+            "pertanyaan": pertanyaan,
+            "jawaban": jawaban
+        })
+        tampilkan_pertanyaan(index + 1)
+
+    tampilkan_pertanyaan(0)
+
 def show_login():
     for widget in main_frame.winfo_children():
         widget.destroy()
@@ -105,7 +184,7 @@ def show_login():
         text_color="#424242"
     )
     label_welcome.place(relx=0.5, rely=0.1, anchor="center")
-    image_path = "smile.png.png"
+    image_path = "smile.png"
     img = Image.open(image_path).resize((200, 200))
     photo = ImageTk.PhotoImage(img)
     img_label = ctk.CTkLabel(main_frame, text="", image=photo, fg_color="transparent")
@@ -181,60 +260,6 @@ def show_login():
     label_daftar.bind("<Enter>", lambda e: label_daftar.configure(text_color="red"))
     label_daftar.bind("<Leave>", lambda e: label_daftar.configure(text_color="#0044cc"))
     label_daftar.bind("<Button-1>", lambda e: show_register())
-
-def mulai_kuis(username):
-    pertanyaan_kuis = [
-        {"pertanyaan": "Apakah kamu ingin makan pedas?", "opsi": ["Iya", "Tidak"], "kolom": "rasa_makanan", "nilai": "pedas"},
-        {"pertanyaan": "Apakah kamu sedang ingin makanan manis?", "opsi": ["Iya", "Tidak"], "kolom": "rasa_makanan", "nilai": "manis"},
-        {"pertanyaan": "Apakah kamu suka makanan berkuah?", "opsi": ["Iya", "Tidak"], "kolom": "tekstur_makanan", "nilai": "berkuah"},
-        {"pertanyaan": "Apakah cuaca di tempatmu panas?", "opsi": ["Iya", "Tidak"], "kolom": "cocok_untuk_cuaca", "nilai": "panas"}
-    ]
-
-    jawaban_user = {"username": username, "jawaban": []}
-    current_index = [0]
-
-    def tampilkan_pertanyaan():
-        for widget in main_frame.winfo_children():
-            widget.destroy()
-
-        if current_index[0] < len(pertanyaan_kuis):
-            item = pertanyaan_kuis[current_index[0]]
-
-            label = ctk.CTkLabel(main_frame, text=item["pertanyaan"], font=("Kanit", 20))
-            label.pack(pady=50)
-
-            def jawab(val):
-                jawaban_user["jawaban"].append({
-                    "pertanyaan": item["pertanyaan"],
-                    "jawaban": val,
-                    "kolom_filter": item["kolom"],
-                    "nilai": item["nilai"] if val == "Iya" else None
-                })
-                current_index[0] += 1
-                tampilkan_pertanyaan()
-
-            for opsi in item["opsi"]:
-                btn = ctk.CTkButton(main_frame, text=opsi, width=200, height=40, command=lambda val=opsi: jawab(val))
-                btn.pack(pady=10)
-        else:
-            # Simpan hasil ke kuis.json
-            try:
-                with open("kuis.json", "r") as f:
-                    data = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError):
-                data = []
-
-            data.append(jawaban_user)
-            with open("kuis.json", "w") as f:
-                json.dump(data, f, indent=4)
-
-            # Setelah kuis selesai, tampilkan ucapan
-            for widget in main_frame.winfo_children():
-                widget.destroy()
-            label = ctk.CTkLabel(main_frame, text="Terima kasih telah mengisi kuis!", font=("Kanit", 20))
-            label.pack(pady=100)
-
-    tampilkan_pertanyaan()
 
 # HALAMAN REGISTER
 def show_register():
